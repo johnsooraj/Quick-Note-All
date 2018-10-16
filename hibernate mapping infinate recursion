@@ -1,0 +1,59 @@
+The issue with hibernate mapping
+
+During bi-directional mapping the parent-child have relationship each other, due to that they both try to fetch each other. It will cause the infinate recursion.
+
+I was using the @JsonManagedReference and @JsonBackReference Annotaions in mapping. It can solve the issue, by stop fetching the next child from the object.
+Example: A and B are two entites, bi-directional mapping too.
+So the result Json will be like,
+{
+	"a":"a"
+	"b":{
+			"b":"b"
+			// there will be a relation to A and so on. that cause the infinate recursion
+		}
+}
+
+Solution 1:
+Adding @JsonIdentityInfo(generator=ObjectIdGenerators.IntSequenceGenerator.class) in our entity
+Examlpe : 
+
+@JsonIdentityInfo(generator=ObjectIdGenerators.IntSequenceGenerator.class)
+@Entity
+public class A implements Serializable 
+...
+
+It will add an @ symbol to the json to identify that it alrady fetched so Jackson will skip(not serialize) that object.
+
+{
+    "@id": 1,
+    "b": {
+        "@id": 2,
+        "a": 1
+    }
+}
+
+an issue with this method is: response from rest service
+@ Sotirios Delimanolis Any idea how to ignore the "@id" in the json response?
+@SuRa What do you mean by ignore? That's the point of @JsonIdentityInfo, to provide a property (it can have any name) that identifies the object.
+While retrieving data from rest client, I am getting <<com.fasterxml.jackson.databind.JsonMappingException: Can not instantiate value of type [simple type, class name ] from Integral number (1); no single-int-arg constructor/factory method>> exception. How to fix this? The nested "a": 1 causing the problem. 
+
+Solution 2:
+
+By using @JsonIgnoreProperties
+
+@Entity
+
+public class Material{
+   ...    
+   @JsonIgnoreProperties("costMaterials")
+   private List<Supplier> costSuppliers = new ArrayList<>();
+   ...
+}
+
+@Entity
+public class Supplier{
+   ...
+   @JsonIgnoreProperties("costSuppliers")
+   private List<Material> costMaterials = new ArrayList<>();
+   ....
+}
