@@ -43,3 +43,5 @@ public class SwaggerConfig {
 			<artifactId>springfox-swagger2</artifactId>
 			<version>2.9.2</version>
 		</dependency>
+
+http://localhost:8080/swagger-ui.html // for ui
